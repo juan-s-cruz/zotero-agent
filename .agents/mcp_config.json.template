@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "zotero": {
+      "command": "zotero-mcp",
+      "env": {
+        "ZOTERO_LOCAL": "",
+        "ZOTERO_LIBRARY_ID": "",
+        "ZOTERO_API_KEY": ""
+      }
+    }
+  }
+}
