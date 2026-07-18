@@ -57,19 +57,47 @@ Edit your Zotero credentials in the MCP configuration file [.agents/mcp_config.j
 - **`ZOTERO_API_KEY`**: A personal API key generated from your Zotero account settings.
 - **`ZOTERO_LOCAL`**: Set to `"true"` if running a local Zotero instance or proxy.
 
-#### Workspace Collection Config
+#### Workspace Collection & Relevance Config
 
-Create a `user_config.json` file in the root of the workspace (using `user_config.json.template` as a model, which is also ignored by git) to define the Zotero collection:
+Create a `user_config.json` file in the root of the workspace (using `user_config.json.template` as a model, which is ignored by git) to configure your agent's targets, relevance guidelines, and sources:
 
 ```json
 {
   "ZOTERO_COLLECTION_KEY": "YOUR_COLLECTION_KEY",
-  "ZOTERO_COLLECTION_NAME": "Applied ML - Corp Finance"
+  "ZOTERO_COLLECTION_NAME": "YOUR_COLLECTION_NAME",
+  "RESEARCH_TOPIC": "YOUR_RESEARCH_TOPIC (e.g. Applied Machine Learning in Corporate Finance)",
+  "RELEVANCE_CRITERIA": {
+    "CORE_TOPICS": [
+      "Topic 1",
+      "Topic 2"
+    ],
+    "EVALUATION_GUIDELINES": {
+      "HIGH_PRIORITY_DIRECT": "Criteria for High Priority papers",
+      "MEDIUM_PRIORITY_TRANSFERABLE": "Criteria for Medium Priority papers",
+      "LOW_PRIORITY_SKIP": "Criteria for Low Priority papers"
+    }
+  },
+  "TRUSTWORTHY_SOURCES": [
+    {
+      "name": "Source Name",
+      "domain": "domain.com",
+      "description": "Short description of the source"
+    }
+  ],
+  "EXAMPLE_SEARCH_QUERIES": [
+    "site:domain.com \"query terms\""
+  ]
 }
 ```
 
-- **`ZOTERO_COLLECTION_KEY`**: The 8-character collection key where relevant papers will be filed.
+- **`ZOTERO_COLLECTION_KEY`**: The 8-character Zotero collection key where relevant papers will be saved.
 - **`ZOTERO_COLLECTION_NAME`**: The display name of the collection.
+- **`RESEARCH_TOPIC`**: The high-level domain or research area for the agent.
+- **`RELEVANCE_CRITERIA.CORE_TOPICS`**: Specific topic items the agent should check for relevance during evaluation.
+- **`RELEVANCE_CRITERIA.EVALUATION_GUIDELINES`**: Detailed heuristic descriptions mapping to High, Medium, and Low priorities to guide the classification of paper abstracts.
+- **`TRUSTWORTHY_SOURCES`**: A list of trusted quant/industry blogs or portals (name, domain, description) that the agent will use for web news expansion.
+- **`EXAMPLE_SEARCH_QUERIES`**: Domain-restricted search queries for web news expansion.
+
 
 #### Initialize the Agent Prompt Instructions
 
