@@ -30,8 +30,13 @@ This setup runs without external Python scripts or code! The agent operates pure
 
 ## 🛠️ Configuration & Setup
 
-### 1. Zotero Credentials
-To use this workspace, you need to configure your Zotero credentials in the MCP configuration file. Edit the environment variables in [.agents/mcp_config.json](.agents/mcp_config.json):
+### 1. Zotero Credentials & Workspace Config
+
+To use this workspace, configure your Zotero credentials and collections by copying the template files and filling in your details:
+
+#### Zotero MCP Server Config
+
+Edit your Zotero credentials in the MCP configuration file [.agents/mcp_config.json](.agents/mcp_config.json) (which is ignored by git):
 
 ```json
 {
@@ -52,7 +57,22 @@ To use this workspace, you need to configure your Zotero credentials in the MCP 
 - **`ZOTERO_API_KEY`**: A personal API key generated from your Zotero account settings.
 - **`ZOTERO_LOCAL`**: Set to `"true"` if running a local Zotero instance or proxy.
 
+#### Workspace Collection Config
+
+Create a `user_config.json` file in the root of the workspace (using `user_config.json.template` as a model, which is also ignored by git) to define the Zotero collection:
+
+```json
+{
+  "ZOTERO_COLLECTION_KEY": "YOUR_COLLECTION_KEY",
+  "ZOTERO_COLLECTION_NAME": "Applied ML - Corp Finance"
+}
+```
+
+- **`ZOTERO_COLLECTION_KEY`**: The 8-character collection key where relevant papers will be filed.
+- **`ZOTERO_COLLECTION_NAME`**: The display name of the collection.
+
 ### 2. Prerequisites
+
 Make sure the `zotero-mcp` CLI or bridge is installed and accessible in your system's `PATH`.
 
 ---
@@ -60,11 +80,13 @@ Make sure the `zotero-mcp` CLI or bridge is installed and accessible in your sys
 ## 🚀 How to Run
 
 1. **Launch the Agent**: Start the Antigravity shell in this directory:
+
    ```bash
    agy
    ```
 
 2. **Initialize / Inspect**: Run the inspection command inside the workspace session to compile configuration and establish the agent's identity:
+
    ```bash
    agy inspect
    ```
@@ -73,8 +95,9 @@ Make sure the `zotero-mcp` CLI or bridge is installed and accessible in your sys
    > **get-newsletter**
 
 The agent will automatically execute the entire pipeline:
+
 1. Scan your Zotero RSS feeds.
 2. Filter papers using the criteria in [.agents/AGENTS.md](.agents/AGENTS.md).
-3. Import relevant titles and URLs to your configured collection (Key: `B2KQMPNI` for *Applied ML - Corp Finance* by default).
+3. Import relevant titles and URLs to your configured collection (specified in `user_config.json`).
 4. Run supplementary web searches via the `web-news-expander` skill.
 5. Generate a comprehensive executive summary in `activity/YYYY-MM/YYYY-MM-DD-summary.md`.

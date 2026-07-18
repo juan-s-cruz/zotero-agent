@@ -1,2 +1,4 @@
-*/mcp_config.json
+.agents/mcp_config.json
+.vscode/
 activity/
+user_config.json
