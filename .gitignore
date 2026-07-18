@@ -1,2 +1,6 @@
-*/mcp_config.json
+.agents/mcp_config.json
+user_config.json
+.agents/AGENTS.md
+.agents/skills/web-news-expander/SKILL.md
+.vscode/
 activity/
