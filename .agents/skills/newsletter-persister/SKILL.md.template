@@ -1,0 +1,36 @@
+# Skill: Newsletter Persister 💾📚
+
+## Description
+
+This skill enables the subagent to take a newly generated newsletter summary file (stored in the `activity/` directory) and persist it into the user's Zotero library as a Parent Report item with a Child Note containing the HTML-formatted summary content, by calling the `scripts/persist.py` script.
+
+---
+
+> [!IMPORTANT]
+> **Path Resolution**: All file paths referenced in this skill's guidelines (such as `activity/` or `.venv/`) are **relative paths to the folder containing this `SKILL.md`**.
+
+---
+
+## 🛠️ Execution Flow & Guidelines
+
+### 1. Trigger Conditions
+
+This skill is activated automatically after the main evaluation agent finishes generating the weekly/monthly executive summary report under `../../../activity/YYYY-MM/YYYY-MM-DD-summary.md`.
+
+### 2. Run the Persistence Script
+
+Execute the script using the local virtual environment `.venv`. The script handles all prerequisites check (such as configuration verification, markdown dependencies, and target collection key check) and automatically validates the API response.
+
+**CRITICAL REQUIREMENT**: The virtual environment `.venv` must exist in the workspace root. If it is missing, you must **STOP immediately** and tell the user: *"The virtual environment `.venv` does not exist in the workspace. Please run the initialization script first: `python3 initialize.py` to set it up."* Do **NOT** fall back to using the global or local system python interpreter.
+
+**CRITICAL SAFETY RULE**: Because this script makes external API calls to Zotero, it cannot run inside the default network-restricted sandbox. You **MUST** request the user's explicit permission to execute the command out of the sandbox (using `BypassSandbox: true`):
+
+```bash
+# Run using the local virtual environment (Linux/macOS)
+../../../.venv/bin/python scripts/persist.py ../../../activity/YYYY-MM/YYYY-MM-DD-summary.md
+
+# Run using the local virtual environment (Windows)
+..\..\..\.venv\Scripts\python.exe scripts/persist.py ..\..\..\activity\YYYY-MM\YYYY-MM-DD-summary.md
+```
+
+Replace `../../../activity/YYYY-MM/YYYY-MM-DD-summary.md` with the exact path of the newly created newsletter summary file relative to this skill file. The script output will report the generated Zotero Item Keys upon success.

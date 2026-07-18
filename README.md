@@ -2,7 +2,7 @@
 
 An automated workspace for native AI agents to check Zotero RSS feed subscriptions, evaluate new papers for relevance to applied machine learning in corporate finance, and file them into targeted Zotero collections.
 
-This setup runs without external Python scripts or code! The agent operates purely on declarative guidelines and leverages the **Model Context Protocol (MCP)** via the **Zotero MCP server** to interface with Zotero.
+The agent operates on declarative guidelines, leveraging the **Model Context Protocol (MCP)** to interface with Zotero and automated python scripts to manage workspace dependencies and Zotero report persistence.
 
 ---
 
@@ -12,7 +12,8 @@ This setup runs without external Python scripts or code! The agent operates pure
 - **Smart Relevance Evaluation**: Uses custom heuristic guidelines to filter for high-value research (e.g., applied ML, multivariate forecasting, volatility estimation, SDEs, and synthetic data).
 - **Automatic Filing & Organization**: Automatically imports relevant papers directly to a Zotero collection without downloading heavy PDF files (unless requested).
 - **Web Insights Expansion**: Supplements academic literature with real-world quantitative/ML industry insights by querying trustworthy blogs (e.g., QuantStart, QuantPedia, Man Group, Two Sigma).
-- **Executive Summaries**: Synthesizes findings into a monthly markdown report, complete with a high-level **General Trends & Trajectory** synthesis.
+- **Executive Summaries**: Synthesizes findings into a markdown report, featuring a high-level **General Trends & Trajectory** synthesis.
+- **Automated Newsletter Persistence**: Immediately pushes the compiled report as a Parent Report item and attached Child Note (HTML format) to the user's Zotero newsletters collection via a dedicated subagent.
 
 ---
 
@@ -21,10 +22,13 @@ This setup runs without external Python scripts or code! The agent operates pure
 - **[.agents/AGENTS.md](.agents/AGENTS.md)**: The core system prompt and instruction manual for the agent. Defines evaluation criteria, goals, and MCP tool instructions.
 - **[.agents/mcp_config.json](.agents/mcp_config.json)**: Declarative MCP server configuration containing credentials and configuration for the `zotero-mcp` connection.
 - **[.agents/skills/web-news-expander/SKILL.md](.agents/skills/web-news-expander/SKILL.md)**: Guidance rules and targeted sources for expanding searches on industry blogs.
+- **[.agents/skills/newsletter-persister/SKILL.md](.agents/skills/newsletter-persister/SKILL.md)**: Guidelines for the subagent responsible for publishing reports back to Zotero.
+- **[.agents/skills/newsletter-persister/scripts/persist.py](.agents/skills/newsletter-persister/scripts/persist.py)**: Python script to convert markdown summaries to HTML and push them to Zotero.
 - **[CLAUDE.md](CLAUDE.md)**: Symlink to [.agents/AGENTS.md](.agents/AGENTS.md) for compatibility with Claude Code.
 - **[.github/copilot-instructions.md](.github/copilot-instructions.md)**: Symlink to [.agents/AGENTS.md](.agents/AGENTS.md) for compatibility with GitHub Copilot.
 - **[.cursorrules](.cursorrules)**: Symlink to [.agents/AGENTS.md](.agents/AGENTS.md) for compatibility with Cursor and other AI-assisted IDEs.
-- **[activity/](activity/)**: Output directory containing historical runs, monthly summaries, and synthesized reports.
+- **[activity/](activity/)**: Output directory containing historical runs, summaries, and synthesized reports.
+- **[requirements.txt](requirements.txt)**: List of Python packages required by the workspace scripts.
 
 ---
 
@@ -53,8 +57,8 @@ Edit your Zotero credentials in the MCP configuration file [.agents/mcp_config.j
 }
 ```
 
-- **`ZOTERO_LIBRARY_ID`**: Your Zotero user ID or group library ID.
-- **`ZOTERO_API_KEY`**: A personal API key generated from your Zotero account settings.
+- **`ZOTERO_LIBRARY_ID`**: Your Zotero User ID (for personal libraries) or Group ID (for group libraries). You can find your personal User ID on the [Zotero API Settings page](https://www.zotero.org/settings/keys) under "Your userID for use in API calls". For group libraries, the Group ID is the numeric ID found in the URL when viewing the group library page on zotero.org (e.g., `zotero.org/groups/123456/items`).
+- **`ZOTERO_API_KEY`**: A personal private key generated from your [Zotero API Settings page](https://www.zotero.org/settings/keys) under "Create new private key".
 - **`ZOTERO_LOCAL`**: Set to `"true"` if running a local Zotero instance or proxy.
 
 #### Workspace Collection & Relevance Config
@@ -65,6 +69,7 @@ Create a `user_config.json` file in the root of the workspace (using `user_confi
 {
   "ZOTERO_COLLECTION_KEY": "YOUR_COLLECTION_KEY",
   "ZOTERO_COLLECTION_NAME": "YOUR_COLLECTION_NAME",
+  "NEWSLETTERS_COLLECTION_KEY": "YOUR_NEWSLETTERS_COLLECTION_KEY",
   "RESEARCH_TOPIC": "YOUR_RESEARCH_TOPIC (e.g. Applied Machine Learning in Corporate Finance)",
   "RELEVANCE_CRITERIA": {
     "CORE_TOPICS": [
@@ -90,24 +95,28 @@ Create a `user_config.json` file in the root of the workspace (using `user_confi
 }
 ```
 
-- **`ZOTERO_COLLECTION_KEY`**: The 8-character Zotero collection key where relevant papers will be saved.
-- **`ZOTERO_COLLECTION_NAME`**: The display name of the collection.
+- **`ZOTERO_COLLECTION_KEY`**: The 8-character alphanumeric collection key where relevant papers will be saved. To find it, open the collection in your web browser on zotero.org; the key is the last part of the URL path (e.g., `zotero.org/users/123456/collections/B2KQMPNI`).
+- **`ZOTERO_COLLECTION_NAME`**: The display name of the papers collection (e.g., "Applied ML - Corp Finance").
+- **`NEWSLETTERS_COLLECTION_KEY`**: The 8-character alphanumeric collection key where the compiled newsletters reports should be saved. Find this key in the Zotero collection URL in the same manner as the `ZOTERO_COLLECTION_KEY` (e.g., `zotero.org/users/123456/collections/E63WSRX2`).
 - **`RESEARCH_TOPIC`**: The high-level domain or research area for the agent.
 - **`RELEVANCE_CRITERIA.CORE_TOPICS`**: Specific topic items the agent should check for relevance during evaluation.
 - **`RELEVANCE_CRITERIA.EVALUATION_GUIDELINES`**: Detailed heuristic descriptions mapping to High, Medium, and Low priorities to guide the classification of paper abstracts.
 - **`TRUSTWORTHY_SOURCES`**: A list of trusted quant/industry blogs or portals (name, domain, description) that the agent will use for web news expansion.
 - **`EXAMPLE_SEARCH_QUERIES`**: Domain-restricted search queries for web news expansion.
 
+#### Initialize the Agent Prompt Instructions & Environment
 
-#### Initialize the Agent Prompt Instructions
-
-Run the compilation script to inject your custom configuration into the agent's prompt instructions:
+Run the initialization script to compile your configuration into the agent's instructions, set up the local virtual environment `.venv`, and install the required workspace dependencies:
 
 ```bash
 python3 initialize.py
 ```
 
-This script reads `user_config.json` and compiles the agent's core guidelines in `.agents/AGENTS.md` and `.agents/skills/web-news-expander/SKILL.md` (which are also ignored by git).
+This script automatically:
+
+1. Creates a local Python virtual environment `.venv` at the workspace root if it does not already exist.
+2. Installs/updates the required Python packages (such as `markdown` for converting summaries to Zotero-friendly HTML) inside the `.venv` from `requirements.txt`.
+3. Reads `user_config.json` and compiles the agent's core instructions in `.agents/AGENTS.md` and `.agents/skills/web-news-expander/SKILL.md` (which are both ignored by git).
 
 ### 2. Prerequisites
 
@@ -139,3 +148,4 @@ The agent will automatically execute the entire pipeline:
 3. Import relevant titles and URLs to your configured collection (specified in `user_config.json`).
 4. Run supplementary web searches via the `web-news-expander` skill.
 5. Generate a comprehensive executive summary in `activity/YYYY-MM/YYYY-MM-DD-summary.md`.
+6. Invoke the `newsletter-persister` subagent to convert the summary to HTML and push it to your configured newsletters collection in Zotero.
