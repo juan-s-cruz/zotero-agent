@@ -1,4 +1,26 @@
 {
   "ZOTERO_COLLECTION_KEY": "YOUR_COLLECTION_KEY",
-  "ZOTERO_COLLECTION_NAME": ""
+  "ZOTERO_COLLECTION_NAME": "YOUR_COLLECTION_NAME",
+  "RESEARCH_TOPIC": "YOUR_RESEARCH_TOPIC (e.g. Applied Machine Learning in Corporate Finance)",
+  "RELEVANCE_CRITERIA": {
+    "CORE_TOPICS": [
+      "Topic 1 (e.g. Applied Machine Learning for corporate finance)",
+      "Topic 2 (e.g. Time series forecasting)"
+    ],
+    "EVALUATION_GUIDELINES": {
+      "HIGH_PRIORITY_DIRECT": "Criteria for High Priority papers (direct relevance)",
+      "MEDIUM_PRIORITY_TRANSFERABLE": "Criteria for Medium Priority papers (transferable methodology)",
+      "LOW_PRIORITY_SKIP": "Criteria for Low Priority papers (skip/not relevant)"
+    }
+  },
+  "TRUSTWORTHY_SOURCES": [
+    {
+      "name": "Source Name (e.g. QuantStart)",
+      "domain": "domain.com (e.g. quantstart.com)",
+      "description": "Short description of the source"
+    }
+  ],
+  "EXAMPLE_SEARCH_QUERIES": [
+    "site:domain.com \"query terms\""
+  ]
 }
