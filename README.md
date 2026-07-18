@@ -71,6 +71,16 @@ Create a `user_config.json` file in the root of the workspace (using `user_confi
 - **`ZOTERO_COLLECTION_KEY`**: The 8-character collection key where relevant papers will be filed.
 - **`ZOTERO_COLLECTION_NAME`**: The display name of the collection.
 
+#### Initialize the Agent Prompt Instructions
+
+Run the compilation script to inject your custom configuration into the agent's prompt instructions:
+
+```bash
+python3 initialize.py
+```
+
+This script reads `user_config.json` and compiles the agent's core guidelines in `.agents/AGENTS.md` and `.agents/skills/web-news-expander/SKILL.md` (which are also ignored by git).
+
 ### 2. Prerequisites
 
 Make sure the `zotero-mcp` CLI or bridge is installed and accessible in your system's `PATH`.
