@@ -1,6 +1,7 @@
 # Skill: Web News Expander 🌐📰
 
 ## Description
+
 Enhances the agent's capability by searching trustworthy blogs and portals for recent articles, methodologies, and tutorials, expanding the research corpus beyond academic Zotero RSS feeds.
 
 ---
@@ -11,6 +12,7 @@ Enhances the agent's capability by searching trustworthy blogs and portals for r
 ---
 
 ## 🔍 Trustworthy Target Sources
+
 When querying the web, prioritize or restrict searches to these domains:
 {{TRUSTWORTHY_SOURCES_LIST}}
 
@@ -19,16 +21,21 @@ When querying the web, prioritize or restrict searches to these domains:
 ## 🛠️ Guidelines & Execution Flow
 
 ### 1. Trigger Conditions
+
 This skill is activated when:
+
 - The user requests to "check the web", "search for blog posts", or "expand news beyond RSS feeds" on the topic of {{RESEARCH_TOPIC}}.
 - Automatically during a weekly/monthly evaluation to add practical industry context to academic paper summaries.
 
 ### 2. Search Syntax
+
 Use search queries combined with domain restrictions to isolate high-quality articles. For example:
 {{EXAMPLE_SEARCH_QUERIES_LIST}}
 
 ### 3. Synthesis & Output
+
 For each relevant article found:
+
 - Extract the title, author (if available), URL, and publication date.
 - Provide a brief summary of the core methodology or insight.
 - Explain the practical application to the target topic ({{RESEARCH_TOPIC}}).

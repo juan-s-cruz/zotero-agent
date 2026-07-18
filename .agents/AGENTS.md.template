@@ -15,18 +15,19 @@ Start the entire evaluation and collection workflow automatically when the user 
 
 - **get-newsletter**
 
-When triggered, proceed directly to executing the goals listed below without requiring additional setup questions.
+When triggered, first check if the target summary file already exists, as detailed in the goals and tool guide below.
 
 ---
 
 ## 🎯 Goals
 
-1. Scan subscribed RSS feeds from Zotero.
-2. Identify papers relevant to the research topic ({{RESEARCH_TOPIC}}) and the core topics:
+1. **Early Check**: Verify whether the target newsletter summary file for today already exists in the workspace under `activity/YYYY-MM/YYYY-MM-DD-summary.md` (e.g. `activity/2026-07/2026-07-18-summary.md`). If the file exists, STOP immediately and ask the user whether the workflow should be cancelled or the output file overwritten.
+2. Scan subscribed RSS feeds from Zotero. *(Note: You must only perform explicit web searches for arXiv papers if the Zotero RSS feeds are completely unavailable—e.g. due to configuration or connection errors—AND you have requested and received explicit user approval. If the feeds are available but empty, do not fall back to web searches for papers.)*
+3. Identify papers relevant to the research topic ({{RESEARCH_TOPIC}}) and the core topics:
 {{CORE_TOPICS}}
-3. Import the relevant papers to the user's Zotero library and file them in the target collection **{{ZOTERO_COLLECTION_NAME}}** (Key: `{{ZOTERO_COLLECTION_KEY}}`).
-4. Leverage the **Web News Expander** skill ([.agents/skills/web-news-expander/SKILL.md](.agents/skills/web-news-expander/SKILL.md)) to search for trustworthy blog articles and tutorials to supplement academic literature with industry insights.
-5. Generate a detailed markdown executive summary of all newly added references and web insights, featuring a "General Trends & Trajectory" section at the top that synthesizes the broader research and industry patterns.
+4. Import the relevant papers to the user's Zotero library and file them in the target collection **{{ZOTERO_COLLECTION_NAME}}** (Key: `{{ZOTERO_COLLECTION_KEY}}`).
+5. Leverage the **Web News Expander** skill ([.agents/skills/web-news-expander/SKILL.md](.agents/skills/web-news-expander/SKILL.md)) to search for trustworthy blog articles and tutorials to supplement academic literature with industry insights.
+6. Generate a detailed markdown executive summary of all newly added references and web insights, featuring a "General Trends & Trajectory" section at the top that synthesizes the broader research and industry patterns.
 
 ---
 
@@ -34,8 +35,12 @@ When triggered, proceed directly to executing the goals listed below without req
 
 You have direct access to the Zotero MCP tools and web search to execute this workflow:
 
+0. **Early Check**: Before using any other tools, calling APIs, or performing search queries, check the workspace for an existing summary file for today at `activity/YYYY-MM/YYYY-MM-DD-summary.md` (using your file tools). If the file exists, pause execution and ask the user: "The newsletter summary for today already exists. Do you want to cancel the workflow or overwrite the existing file?"
+   - If the user chooses to cancel, stop execution.
+   - If the user chooses to overwrite, proceed to step 1.
 1. **List Feeds**: Call `zotero_list_feeds` to discover the feed `library_id` values.
 2. **Fetch Feed Items**: Call `zotero_get_feed_items(library_id=..., limit=...)` to list titles, URLs, and abstracts of recent papers in a feed.
+   - **Crucial Rule**: Do not perform general web searches or search engine queries for academic papers unless the `zotero_get_feed_items` tool is unavailable or returns an error, AND you have requested and received explicit user approval. If the feeds return successfully but contain no items, proceed with 0 papers (or only summarize web/industry insights).
 3. **Verify Collections**: Call `zotero_search_collections(query="{{ZOTERO_COLLECTION_NAME}}")` to verify that the collection key `{{ZOTERO_COLLECTION_KEY}}` exists.
 4. **Import & File Papers**: For each relevant paper:
    - Call `zotero_add_by_url(url="...", collections=["{{ZOTERO_COLLECTION_KEY}}"], attach_mode="none")`.
