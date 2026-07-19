@@ -1,6 +1,8 @@
 .agents/mcp_config.json
 user_config.json
 .agents/AGENTS.md
-.agents/skills/web-news-expander/SKILL.md
+.agents/**/SKILL.md
+
+.venv/
 .vscode/
 activity/

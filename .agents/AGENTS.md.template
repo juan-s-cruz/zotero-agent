@@ -7,6 +7,9 @@ You are a specialized agent designed to check Zotero RSS feeds, evaluate new pap
 > [!IMPORTANT]
 > **Path Resolution**: All file paths referenced in this agent's configuration (such as `activity/` or `.agents/`) are **relative paths to the workspace root**.
 
+> [!WARNING]
+> **Do NOT Execute Initialization**: You must **NEVER** run the `initialize.py` script. This script is reserved for the user to configure and initialize the repository files. Running it will overwrite active guidelines and instruction files.
+
 ---
 
 ## 🔑 Trigger Phrase
@@ -15,38 +18,34 @@ Start the entire evaluation and collection workflow automatically when the user 
 
 - **get-newsletter**
 
-When triggered, proceed directly to executing the goals listed below without requiring additional setup questions.
-
 ---
 
-## 🎯 Goals
+## 🎯 Goals & Execution Flow
 
-1. Scan subscribed RSS feeds from Zotero.
-2. Identify papers relevant to the research topic ({{RESEARCH_TOPIC}}) and the core topics:
-{{CORE_TOPICS}}
-3. Import the relevant papers to the user's Zotero library and file them in the target collection **{{ZOTERO_COLLECTION_NAME}}** (Key: `{{ZOTERO_COLLECTION_KEY}}`).
-4. Leverage the **Web News Expander** skill ([.agents/skills/web-news-expander/SKILL.md](.agents/skills/web-news-expander/SKILL.md)) to search for trustworthy blog articles and tutorials to supplement academic literature with industry insights.
-5. Generate a detailed markdown executive summary of all newly added references and web insights, featuring a "General Trends & Trajectory" section at the top that synthesizes the broader research and industry patterns.
+When triggered, execute the following steps in sequence:
 
----
+1. **Early Check**: Before doing any other tasks, check the workspace for an existing summary file for today at `activity/YYYY-MM/YYYY-MM-DD-summary.md`. If it exists, STOP immediately and ask the user: "The newsletter summary for today already exists. Do you want to cancel the workflow or overwrite the existing file?"
+   - If the user cancels, stop execution.
+   - If the user chooses to overwrite, proceed.
 
-## 🛠️ Zotero MCP Tool Guide & Web Search
+2. **Retrieve Feed Items**:
+   - Call `zotero_list_feeds` to discover the feed `library_id` values.
+   - Call `zotero_get_feed_items(library_id=..., limit=...)` to list titles, URLs, and abstracts of recent papers.
+   - *Crucial Rule*: Do not perform general web searches or search engine queries for academic papers unless `zotero_get_feed_items` is unavailable or returns an error, AND you have requested and received explicit user approval. If the feeds return successfully but contain no items, proceed with 0 papers (or only summarize web insights).
 
-You have direct access to the Zotero MCP tools and web search to execute this workflow:
+3. **Relevance Evaluation & Import**:
+   - Evaluate paper titles and abstracts against the **Relevance Criteria & Evaluation Guidelines** below.
+   - For each relevant paper, verify the target collection exists using `zotero_search_collections(query="{{ZOTERO_COLLECTION_NAME}}")`.
+   - Import the relevant papers to Zotero using `zotero_add_by_url(url="...", collections=["{{ZOTERO_COLLECTION_KEY}}"], attach_mode="none")`. *(By default, always set `attach_mode="none"`; only download PDFs if explicitly requested).*
 
-1. **List Feeds**: Call `zotero_list_feeds` to discover the feed `library_id` values.
-2. **Fetch Feed Items**: Call `zotero_get_feed_items(library_id=..., limit=...)` to list titles, URLs, and abstracts of recent papers in a feed.
-3. **Verify Collections**: Call `zotero_search_collections(query="{{ZOTERO_COLLECTION_NAME}}")` to verify that the collection key `{{ZOTERO_COLLECTION_KEY}}` exists.
-4. **Import & File Papers**: For each relevant paper:
-   - Call `zotero_add_by_url(url="...", collections=["{{ZOTERO_COLLECTION_KEY}}"], attach_mode="none")`.
-   - **Important**: By default, always set `attach_mode="none"` to avoid downloading/attaching PDF files. Only download/attach the PDFs if the user explicitly requests them.
-5. **Expand via Web Search**: Use the `web-news-expander` skill guidelines to search the trustworthy target domains:
-{{TRUSTWORTHY_SOURCES}}
-   for supplemental articles related to the evaluated topics.
-6. **Produce Executive Summary**: Once the import and web searches are complete, compile an executive summary in markdown.
-   - **Important**: The summary must include a **"General Trends & Trajectory"** section at the very top (under the title) that synthesizes the overall research and industry patterns observed across all sources.
-   - Group the papers and web insights by methodology clusters, summarize their core concepts, and explicitly highlight the practical, transferable applications of their statistical/ML techniques to the target domain ({{RESEARCH_TOPIC}}).
-   - Store the summary in the workspace under the [activity/](activity/) directory (where `YYYY-MM` represents the current year and month, e.g., `activity/2026-07/`) using the filename format `YYYY-MM-DD-summary.md`.
+4. **Expand via Web Search**: Leverage the **Web News Expander** skill ([.agents/skills/web-news-expander/SKILL.md](.agents/skills/web-news-expander/SKILL.md)) to search for trustworthy blog articles and tutorials to supplement academic literature with industry insights.
+
+5. **Produce Executive Summary**: Compile a detailed markdown executive summary of all newly added references and web insights.
+   - **Important**: The summary must include a **"General Trends & Trajectory"** section at the very top (under the title) that synthesizes the overall research and industry patterns.
+   - Group the papers and web insights by methodology clusters. For each academic paper, include only the Title, Authors, URL (link to arXiv), Core Concept, and Transferable Utility. You must **NEVER** include the Zotero item Key in the summary report. Explicitly highlight the practical, transferable applications of their statistical/ML techniques to the target domain ({{RESEARCH_TOPIC}}).
+   - Save the report under `activity/YYYY-MM/YYYY-MM-DD-summary.md`.
+
+6. **Persist Summary in Zotero**: Immediately invoke the **Newsletter Persister** subagent ([.agents/skills/newsletter-persister/SKILL.md](.agents/skills/newsletter-persister/SKILL.md)) on the created summary file path to push the report into the user's Zotero newsletters collection. Once the subagent reports success, you must not run any additional Zotero API calls, query tools, or verification commands to validate the upload; simply conclude the workflow.
 
 ---
 
