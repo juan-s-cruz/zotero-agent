@@ -16,6 +16,51 @@ except ImportError:
     sys.exit(1)
 
 
+# Matches a bullet ("-", "*", "+") or ordered ("1.") list item start.
+_LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+\S")
+
+
+def _ensure_blank_line_before_lists(md_content):
+    """Insert a blank line before any list item that directly follows
+    non-blank, non-list text.
+
+    Markdown (including Python-Markdown) requires a blank line to let a
+    list "interrupt" a preceding paragraph. Without it, the list markers
+    are treated as literal text and silently folded into the previous
+    paragraph instead of becoming an actual <ul>/<ol>/<li> structure.
+    This normalizes the source so that failure mode can't happen
+    regardless of how the markdown was authored.
+    """
+    lines = md_content.split("\n")
+    fixed_lines = []
+    for line in lines:
+        is_list_item = bool(_LIST_ITEM_RE.match(line))
+        if is_list_item and fixed_lines:
+            prev_line = fixed_lines[-1]
+            prev_is_blank = prev_line.strip() == ""
+            prev_is_list_item = bool(_LIST_ITEM_RE.match(prev_line))
+            if not prev_is_blank and not prev_is_list_item:
+                fixed_lines.append("")
+        fixed_lines.append(line)
+    return "\n".join(fixed_lines)
+
+
+def _warn_if_lists_were_dropped(md_content, html_content):
+    """Best-effort sanity check: if the source markdown clearly contains
+    list items but the generated HTML has no <ul>/<ol>, warn loudly so
+    the issue isn't pushed to Zotero silently."""
+    has_source_list_items = any(
+        _LIST_ITEM_RE.match(line) for line in md_content.split("\n")
+    )
+    has_html_lists = "<ul>" in html_content or "<ol>" in html_content
+    if has_source_list_items and not has_html_lists:
+        print(
+            "Warning: source markdown appears to contain list items, but no "
+            "<ul>/<ol> was found in the generated HTML. The note may render "
+            "with broken list formatting in Zotero."
+        )
+
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python3 persist.py <relative_markdown_path>")
@@ -104,7 +149,9 @@ def main():
         md_content = f.read()
 
     # 5. Convert markdown to simple HTML (UTF-8/Emojis preserved)
+    md_content = _ensure_blank_line_before_lists(md_content)
     html_content = markdown.markdown(md_content, extensions=["extra"])
+    _warn_if_lists_were_dropped(md_content, html_content)
 
     # 6. Build Zotero Base URL
     base_url = f"https://api.zotero.org/{library_type}s/{user_id}/items"
