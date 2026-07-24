@@ -46,7 +46,7 @@ def main():
             return
 
     print("Reading configuration...")
-    with open(config_path, "r") as f:
+    with open(config_path, "r", encoding="utf-8") as f:
         config = json.load(f)
 
     # 3. Prepare replacements
@@ -104,13 +104,13 @@ def main():
             continue
 
         print(f"Processing template {template_path} -> {target_path}...")
-        with open(template_path, "r") as f:
+        with open(template_path, "r", encoding="utf-8") as f:
             content = f.read()
 
         for placeholder, value in replacements.items():
             content = content.replace(f"{{{{{placeholder}}}}}", str(value))
 
-        with open(target_path, "w") as f:
+        with open(target_path, "w", encoding="utf-8") as f:
             f.write(content)
 
     print("Agent system successfully initialized!")
