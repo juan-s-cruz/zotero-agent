@@ -1,0 +1,10 @@
+[project]
+name = "zotero-agent"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.14"
+dependencies = [
+    "markdown==3.10.2",
+    "zotero-mcp-server==0.6.2",
+]

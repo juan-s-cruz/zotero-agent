@@ -61,6 +61,14 @@ Edit your Zotero credentials in the MCP configuration file [.agents/mcp_config.j
 - **`ZOTERO_API_KEY`**: A personal private key generated from your [Zotero API Settings page](https://www.zotero.org/settings/keys) under "Create new private key".
 - **`ZOTERO_LOCAL`**: Set to `"true"` if running a local Zotero instance or proxy.
 
+#### How the MCP Server Connects
+
+The `zotero-mcp` server is what the agent actually calls (`zotero_get_feed_items`, `zotero_add_by_url`, etc.) — it's a bridge between the agent and Zotero, not Zotero itself.
+
+- With `ZOTERO_LOCAL=true`, the server talks to the **Zotero desktop app's local HTTP API** on this machine, not zotero.org. **Zotero desktop must be running** for any `zotero_*` tool call to succeed. Enable local API access once in Zotero: Settings → Advanced → "Allow other applications on this computer to communicate with Zotero".
+- With `ZOTERO_LOCAL` unset/`false`, the server instead calls the Zotero **web API**, and `ZOTERO_API_KEY`/`ZOTERO_LIBRARY_ID` are used for real authentication.
+- If every Zotero tool call fails with a connection error, check Zotero desktop is open before checking credentials.
+
 #### Workspace Collection & Relevance Config
 
 Create a `user_config.json` file in the root of the workspace (using `user_config.json.template` as a model, which is ignored by git) to configure your agent's targets, relevance guidelines, and sources:

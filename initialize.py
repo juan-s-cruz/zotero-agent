@@ -56,6 +56,8 @@ def main():
         "ZOTERO_COLLECTION_KEY": config.get("ZOTERO_COLLECTION_KEY", ""),
         "NEWSLETTERS_COLLECTION_KEY": config.get("NEWSLETTERS_COLLECTION_KEY", ""),
         "ZOTERO_LIBRARY_ID": config.get("ZOTERO_LIBRARY_ID", ""),
+        "ZOTERO_API_KEY": config.get("ZOTERO_API_KEY", ""),
+        "ZOTERO_LOCAL": config.get("ZOTERO_LOCAL", "true"),
     }
 
     # Format CORE_TOPICS as markdown list items
@@ -96,6 +98,7 @@ def main():
             ".agents/skills/newsletter-persister/SKILL.md.template",
             ".agents/skills/newsletter-persister/SKILL.md",
         ),
+        (".agents/mcp_config.json.template", ".agents/mcp_config.json"),
     ]
 
     for template_path, target_path in templates:

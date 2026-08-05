@@ -18,6 +18,45 @@ except ImportError:
 
 # Matches a bullet ("-", "*", "+") or ordered ("1.") list item start.
 _LIST_ITEM_RE = re.compile(r"^\s*(?:[-*+]|\d+\.)\s+\S")
+_ANGLE_URL_RE = re.compile(r"<\s*(https?://[^\s>]+)\s*>")
+_URL_LINE_RE = re.compile(r"^(\s*[-*+]\s+\*\*URL\*\*:\s*)(.+?)\s*$")
+
+
+def _normalize_urls_for_zotero(md_content):
+    """Normalize URL markdown so Zotero note rendering is consistent.
+
+    1) Convert angle-bracket autolinks like <https://...> into explicit
+       markdown links [https://...](https://...).
+    2) Convert plain URL field values in list items ("- **URL**: https://...")
+       into explicit links as well.
+    """
+    # Global conversion for angle-bracket autolinks.
+    normalized = _ANGLE_URL_RE.sub(r"[\1](\1)", md_content)
+
+    # Line-specific conversion for URL fields that are plain text URLs.
+    fixed_lines = []
+    for line in normalized.split("\n"):
+        match = _URL_LINE_RE.match(line)
+        if not match:
+            fixed_lines.append(line)
+            continue
+
+        prefix, value = match.groups()
+        value = value.strip()
+
+        # Keep existing markdown links untouched.
+        if re.match(r"^\[[^\]]+\]\([^\)]+\)$", value):
+            fixed_lines.append(line)
+            continue
+
+        # Convert plain URL values into explicit markdown links.
+        if re.match(r"^https?://\S+$", value):
+            fixed_lines.append(f"{prefix}[{value}]({value})")
+            continue
+
+        fixed_lines.append(line)
+
+    return "\n".join(fixed_lines)
 
 
 def _ensure_blank_line_before_lists(md_content):
@@ -149,6 +188,7 @@ def main():
         md_content = f.read()
 
     # 5. Convert markdown to simple HTML (UTF-8/Emojis preserved)
+    md_content = _normalize_urls_for_zotero(md_content)
     md_content = _ensure_blank_line_before_lists(md_content)
     html_content = markdown.markdown(md_content, extensions=["extra"])
     _warn_if_lists_were_dropped(md_content, html_content)
