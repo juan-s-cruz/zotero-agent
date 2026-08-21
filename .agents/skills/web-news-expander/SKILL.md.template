@@ -1,3 +1,8 @@
+---
+name: web-news-expander
+description: Expands the agent's research by retrieving recent articles from trustworthy web sources.
+---
+
 # Skill: Web News Expander 🌐📰
 
 ## Description
@@ -13,7 +18,7 @@ Enhances the agent's capability by searching trustworthy blogs and portals for r
 
 ## 🔍 Trustworthy Target Sources
 
-When querying the web, prioritize or restrict searches to these domains:
+When querying the web, restrict searches to these domains:
 {{TRUSTWORTHY_SOURCES_LIST}}
 
 ---
