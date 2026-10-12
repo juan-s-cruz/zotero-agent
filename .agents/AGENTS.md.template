@@ -6,6 +6,7 @@ You are a specialized agent designed to check Zotero RSS feeds, evaluate new pap
 
 > [!IMPORTANT]
 > **Path Resolution**: All file paths referenced in this agent's configuration (such as `activity/` or `.agents/`) are **relative paths to the workspace root**.
+
 > [!WARNING]
 > **Do NOT Execute Initialization**: You must **NEVER** run the `initialize.py` script. This script is reserved for the user to configure and initialize the repository files. Running it will overwrite active guidelines and instruction files.
 
@@ -47,7 +48,7 @@ When triggered, execute the following steps in sequence:
 2. **Retrieve Feed Items**:
    - Call `zotero_list_feeds` to discover the feed `library_id` values.
    - Call `zotero_get_feed_items(library_id=..., limit=...)` to list titles, URLs, and abstracts of recent papers.
-   - _Crucial Rule_: Do not perform general web searches or search engine queries for academic papers unless `zotero_get_feed_items` is unavailable or returns an error, AND you have requested and received explicit user approval. If the feeds return successfully but contain no items, proceed with 0 papers (or only summarize web insights).
+   - *Crucial Rule*: Do not perform general web searches or search engine queries for academic papers unless `zotero_get_feed_items` is unavailable or returns an error, AND you have requested and received explicit user approval. If the feeds return successfully but contain no items, proceed with 0 papers (or only summarize web insights).
 
 3. **Relevance Evaluation & Import**:
    - Evaluate paper titles and abstracts against the **Relevance Criteria & Evaluation Guidelines** below.
@@ -58,37 +59,38 @@ When triggered, execute the following steps in sequence:
 
 5. **Produce Executive Summary**: Compile a detailed markdown executive summary of all newly added references and web insights.
    - **Important**: The summary must include a **General Trends & Trajectory** section at the very top (under the title) that synthesizes the overall research papers found and industry patterns.
-   - The second section must be titled **🌐 Web Insights & Industry News** and must contain the output of the findings from the **Web News Expander**
+   - The second section must be titled **🌐 Web Insights & Industry News** and must contain the output of the findings from the **Web News Expander**. This section should be more business oriented and never link to arxiv or academic papers directly.
    - The last section must be titled **📚 New Selected Academic Papers**. Group the papers and web insights by methodology clusters. For each academic paper, include only the Title, Authors, URL (link to arXiv with the format `[short_title](url)` ), Core Concept, and Transferable Utility. You must **NEVER** include the Zotero item Key in the summary report. Explicitly highlight the practical, transferable applications of their statistical/ML techniques to the target domain ({{RESEARCH_TOPIC}}).
+   - Verify articles have not appeared in recent summaries to avoid duplication, before including them in the current summary.
    - **Article formatting rule (required)**: Do not output consecutive article bullet lists without an interrupting block. For every article, start with a level-4 heading, then place its fields as bullets underneath. This prevents Markdown renderers from collapsing multiple articles into one continuous list.
    - **Use this exact article pattern**:
-
      ```markdown
      #### Article: <Title>
-
      - **Source**: <Source>
-     - **URL**: [short_label](https://example.com)
+       - **URL**: [short_label](https://example.com)
      - **Core insight**: <1-2 sentence summary>
      - **Practical application**: <transferable finance use>
      ```
-
-   - **Link rule (required)**: Never use bare URL or angle-bracket URL form like `https://...` or `<https://...>`. Always use explicit markdown links `[label](url)` for all URLs, especially in `**URL**` fields, to ensure Zotero note rendering preserves clickable links.
+    - **Link rule (required)**: Never use bare URL or angle-bracket URL form like `https://...` or `<https://...>`. Always use explicit markdown links `[label](url)` for all URLs, especially in `**URL**` fields, to ensure Zotero note rendering preserves clickable links.
    - Save the report under `activity/YYYY-MM/YYYY-MM-DD-summary.md`.
+   
 
 6. **Persist Summary in Zotero**: Immediately invoke the **Newsletter Persister** subagent ([.agents/skills/newsletter-persister/SKILL.md](.agents/skills/newsletter-persister/SKILL.md)) on the created summary file path to push the report into the user's Zotero newsletters collection. Once the subagent reports success, you must not run any additional Zotero API calls, query tools, or verification commands to validate the upload; simply conclude the workflow.
 
-7. **Produce Business Digest** _(only when triggered with the `--biz` flag)_:
+7. **Produce Business Digest** *(only when triggered with the `--biz` flag)*:
    - Derive a second, business-friendly digest from the academic summary produced in Step 5 — do not re-scan the feeds or re-evaluate relevance; this is a rewrite/filter of the same day's already-selected papers and web insights.
    - **Filter out** any content whose primary lens is financial services / quantitative trading (e.g., stock-return prediction, options/derivatives pricing, algorithmic trading strategies, quant fund due-diligence). Keep only material with clear **corporate finance or group finance** applications (FP&A, budgeting, pricing, capital/reserving, treasury, internal model governance, cash-flow forecasting across business units, etc.). If a Web Insights item is quant-trading-focused, drop it too — it's fine for the business digest to omit the Web Insights section entirely if nothing qualifies.
    - **Tone**: Slightly less academic and more appealing to a business audience — plain language, light on jargon, warm and approachable. Use emojis throughout (section headers and callouts) to keep it lively.
    - **Structure** (mirror this exactly):
      - Title: `# 📊 Corporate & Group Finance Digest — DD Month YYYY`
      - `## 🔎 The Big Picture` — a short synthesizing paragraph.
-     - `## 💡 What This Means For Us` — one numbered subsection per kept paper, each with: paper title/link, a plain-language explanation of what it does, and a **"Why it matters for us:"** callout with an emoji tying it to corporate/group finance.
      - `## ✅ Takeaway for the Business Side` — a short closing bullet list, one line per key theme, each ending in an emoji.
+     - `## 💡 What This Means For Us` — one numbered subsection per kept paper, each with: paper title/link, a plain-language explanation of what it does, and a **"Why it matters for us:"** callout with an emoji tying it to corporate/group finance.
    - **Never include Zotero item keys** in this digest either.
    - Save the report under `activity/YYYY-MM/YYYY-MM-DD-business-digest.md`.
    - **Do not** persist this digest to Zotero automatically — it is a local-only artifact by default. Only push it to Zotero if the user explicitly asks.
+   - Keep the list to a maximum of 10 articles; the most relevant ones.
+   - For the titles prefer to be descriptive and plain-language rather than technical.
 
 ---
 
@@ -104,11 +106,10 @@ Evaluate the paper's title and abstract against the following rules:
 
 ## ⚠️ Known Operational Gotchas (Lessons Learned)
 
-- **`zotero_get_feed_items` output can be too large to read directly**: for feeds with 20-40 items, the tool result is written to a temp `content.json` file instead of being inlined, and that file is effectively a single long JSON line. Reading it with a line-based file viewer truncates each line at ~2000 characters and silently cuts off most abstracts. Workaround: use a short Python one-liner (`json.load(...)['result']`), executed **always** with the local environment at `.venv`, to dump the `result` field to a plain-text file, then read that file — don't trust a raw line-range read of the JSON tool-output file. Always use the `scratch` directory for temp files, not the workspace root and **clean them up** after use.
-- **Newsletter Persister path instructions are relative to the _workspace root_, not the skill file**: the [Newsletter Persister SKILL.md](../.agents/skills/newsletter-persister/SKILL.md) example command shows the markdown path as `../../../activity/YYYY-MM/YYYY-MM-DD-summary.md` (relative to the skill file's own folder), but `scripts/persist.py` actually joins the given path directly onto the workspace root (`os.path.join(workspace_root, relative_path)`). Passing the `../../../activity/...` form resolves _outside_ the workspace and fails with "The markdown file must be located inside the 'activity' directory." Always invoke the script from the workspace root with a plain workspace-relative path, e.g.:
-
+- **`zotero_get_feed_items` output can be too large to read directly**: for feeds with 20-40 items, the tool result is written to a temp `content.json` file instead of being inlined, and that file is effectively a single long JSON line. Reading it with a line-based file viewer truncates each line at ~2000 characters and silently cuts off most abstracts. Workaround: use a short Python one-liner (`json.load(...)['result']`), executed **always** with the local environment at `.venv`, to dump the `result` field to a plain-text file, then read that file — don't trust a raw line-range read of the JSON tool-output file. Always use the `scratch` directory for temp files, not the workspace root and clean them up after use.
+- **Newsletter Persister path instructions are relative to the *workspace root*, not the skill file**: the [Newsletter Persister SKILL.md](../.agents/skills/newsletter-persister/SKILL.md) example command shows the markdown path as `../../../activity/YYYY-MM/YYYY-MM-DD-summary.md` (relative to the skill file's own folder), but `scripts/persist.py` actually joins the given path directly onto the workspace root (`os.path.join(workspace_root, relative_path)`). Passing the `../../../activity/...` form resolves *outside* the workspace and fails with "The markdown file must be located inside the 'activity' directory." Always invoke the script from the workspace root with a plain workspace-relative path, e.g.:
   ```bash
   .venv/Scripts/python.exe .agents/skills/newsletter-persister/scripts/persist.py activity/YYYY-MM/YYYY-MM-DD-summary.md
   ```
-
 - **`persist.py` makes a live external Zotero API call** (creating a Report item + child note). Since this mutates the user's real library and isn't easily undone via the API, ask for explicit user confirmation before running it, even though the skill file's own "BypassSandbox" wording doesn't map to any real tool flag in this environment — treat it as a generic "confirm before external write" requirement instead.
+- **Technical errors**: If the skill encounters unexpected technical errors (e.g., network failures, parsing issues), it may not return complete or accurate results. Always handle errors gracefully in your workflow and never expose or include technical error details directly in the newsletters.
